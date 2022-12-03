@@ -2,7 +2,7 @@ import argparse
 import transforms
 import os
 import pandas as pd
-import dataset
+from .dataset_CUB import dataset
 import model
 
 def Init_transforms(args):

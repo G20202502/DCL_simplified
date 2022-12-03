@@ -23,6 +23,8 @@ class dataset(data.Dataset):
             self.path = anno['img_name']
             self.labels = anno['label']
         self.swap=swap
+    def _getlen_(self):
+        return len(self.labels)
     def _getitem_(self, item):
         paths=os.path.join(self.root_path, self.path[item])
         image=Image(open(paths))

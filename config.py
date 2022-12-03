@@ -1,5 +1,7 @@
 import argparse
 import transforms
+import os
+import pandas as pd
 import dataset
 import model
 
@@ -23,15 +25,24 @@ def Init_transforms(args):
     return dataset_transforms
 
 def Init_dataset(args):
+    train_anno=pd.readcsv(os.path.join((args.data_dir, 'anno/ct_train.txt'),sep=" ",header=None,names=['Imagename', 'label']))
+    val_anno=pd.readcsv(os.path.join((args.data_dir, 'anno/ct_val.txt'),sep=" ",header=None,names=['Imagename', 'label']))
+    path=os.path.join(args.data_dir,'data')
+    transformers = Init_transforms(args)
+    tran_set = dataset(path, train_anno, swap=transformers["swap"], common_aug=transformers["img_aug"], train=True)
+    val_set = dataset(path, val_anno, swap=transformers["None"], common_aug=transformers["None"], val=True)
+    return tran_set, val_set
+    
 
 
 def Init_model(args):
-
+    pass
 
 def Initialization():
     parser = argparse.ArgumentParser(description='DCL_arguments')
 
     parser.add_argument('--save_dir', default = None)
+    parser.add_argument('--data_dir', default = None)
     parser.add_argument('--epoch_num', default = 180)
     parser.add_argument('--train_batchsize', default = 16)
     parser.add_argument('--eval_batchsize', default = 16)
@@ -44,6 +55,7 @@ def Initialization():
     parser.add_argument('--eval_num_workers', default = 16)
     parser.add_argument('--crop_reso', default = 448)
     parser.add_argument('--swap_window', default = 7)
+    parser.add_argument('--resnet50_path', default = None)
 
     args = parser.parse_args()
 

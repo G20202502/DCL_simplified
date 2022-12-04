@@ -1016,7 +1016,7 @@ class RandomGrayscale(object):
 
 class Randomswap(object):
     def __init__(self, size):
-        self.size = (size, size)
+        self.size = size
 
     def __call__(self, img):
         return F.swap(img, self.size)

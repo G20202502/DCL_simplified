@@ -1,5 +1,3 @@
-from __future__ import print_function, division
-
 import os,time,datetime
 import numpy as np
 from math import ceil
@@ -11,34 +9,29 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch.backends.cudnn as cudnn
 import config
-from .dataset_CUB import collate_train, collate_val
-from .model import DCL_Network
-from .eval import eval()
+from dataset_CUB import collate_train, collate_val
+from DCL_model import DCL_Network
+from eval import eval
 def dt():
     return datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
 
 def train(model,
           epoch_num,
-          start_epoch,
           optimizer,
           exp_lr_scheduler,
           data_loader,
           save_dir,
-          log_dir,
-          data_size=448,
           checkpoint=1000):
     step=0
     train_batch_size = data_loader['train'].batch_size
     train_epoch_step = data_loader['train'].__len__()
     date_suffix = dt()
-    log_file = open(os.path.join(log_dir, 'formal_log_r50_dcl_%s_%s.log'%(str(data_size), date_suffix)), 'a')
     con_loss_func = nn.L1Loss()
     cls_loss_func = nn.CrossEntropyLoss()
     alpha=1
     beta=1
     gamma=1
-    for epoch in range(start_epoch, epoch_num-1):
-        exp_lr_scheduler.step(epoch)
+    for epoch in range(0, epoch_num-1):
         model.train(True)
         tqdm_tmp = tqdm(enumerate(data_loader['train']), total=train_epoch_step, leave = False)
         tqdm_tmp.set_description('Epoch %d' % epoch)
@@ -70,7 +63,8 @@ def train(model,
                 torch.save(model.state_dict(), save_path)
                 print('saved model to %s' % (save_path), flush=True)
                 torch.cuda.empty_cache()
-    log_file.close()
+        
+        exp_lr_scheduler.step(epoch)
 
 def auto_load_resume(load_dir):
     folders = os.listdir(load_dir)
@@ -87,24 +81,21 @@ if __name__ == '__main__':
     args, train_dataset, val_dataset, model = config.Initialization()
     dataloader = {}
     dataloader['train'] = torch.utils.data.DataLoader(train_dataset,\
-                                                batch_size=args.train_batch,\
+                                                batch_size=args.train_batchsize,\
                                                 shuffle=True,\
                                                 num_workers=args.train_num_workers,\
                                                 collate_fn=collate_train,
                                                 drop_last=False,
                                                 pin_memory=True)
 
-    setattr(dataloader['train'], 'total_item_len', len(val_dataset))
     dataloader['val'] = torch.utils.data.DataLoader(val_dataset,\
-                                                batch_size=args.val_batch,\
+                                                batch_size=args.eval_batchsize,\
                                                 shuffle=True,\
-                                                num_workers=args.val_num_workers,\
+                                                num_workers=args.eval_num_workers,\
                                                 collate_fn=collate_val,
                                                 drop_last=False,
                                                 pin_memory=True)
 
-    setattr(dataloader['val'], 'total_item_len', len(train_dataset))
-    setattr(dataloader['val'], 'num_cls', 200)
     if not args.auto_resume:
         print('train from imagenet pretrained models ...', flush=True)
     else:
@@ -126,9 +117,9 @@ if __name__ == '__main__':
     model.cuda()
     model = nn.DataParallel(model)
 
-    ignored_params1 = list(map(id, model.module.classifier.parameters()))
-    ignored_params2 = list(map(id, model.module.classifier_swap.parameters()))
-    ignored_params3 = list(map(id, model.module.Convmask.parameters()))
+    ignored_params1 = list(map(id, model.module.cls_linear.parameters()))
+    ignored_params2 = list(map(id, model.module.adv_linear.parameters()))
+    ignored_params3 = list(map(id, model.module.con_conv.parameters()))
 
     ignored_params = ignored_params1 + ignored_params2 + ignored_params3
 
@@ -138,22 +129,17 @@ if __name__ == '__main__':
     base_lr = args.base_lr
 
     optimizer = optim.SGD([{'params': base_params},
-                               {'params': model.module.classifier.parameters(), 'lr': lr_ratio*base_lr},
-                               {'params': model.module.classifier_swap.parameters(), 'lr': lr_ratio*base_lr},
-                               {'params': model.module.Convmask.parameters(), 'lr': lr_ratio*base_lr},
+                               {'params': model.module.cls_linear.parameters(), 'lr': lr_ratio*base_lr},
+                               {'params': model.module.adv_linear.parameters(), 'lr': lr_ratio*base_lr},
+                               {'params': model.module.con_conv.parameters(), 'lr': lr_ratio*base_lr},
                               ], lr = base_lr, momentum=0.9)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=args.decay_step, gamma=0.1)
 
     train(model,
           epoch_num=args.epoch_num,
-          start_epoch=args.start_epoch,
           optimizer=optimizer,
           exp_lr_scheduler=exp_lr_scheduler,
           data_loader=dataloader,
           save_dir=args.save_dir,
-          data_size=args.crop_reso,
           checkpoint=args.eval_epoch)
-
-
-            

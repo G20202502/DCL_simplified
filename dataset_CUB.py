@@ -1,7 +1,6 @@
 from __future__ import division
 import os
-from transforms.transforms import ToTensor
-from matplotlib.cbook import contiguous_regions
+from torchvision.transforms import ToTensor
 import torch
 import torch.utils.data as data
 import pandas
@@ -10,20 +9,16 @@ import PIL.Image as Image
 from PIL import ImageStat
 
 class dataset(data.Dataset):
-    def _init_(self, data_path, anno, swap_size=[7,7], swap=None, common_aug=None,  train=False, val=False):
+    def __init__(self, data_path, anno, swap_size=[7,7], swap=None, common_aug=None,  train=False, val=False):
         self.root_path = data_path
         self.swap_size=swap_size
         self.common_aug=common_aug
         self.train=train
         self.val=val
-        if isinstance(anno, pandas.core.frame.DataFrame):
-            self.path = anno['ImageName'].tolist()
-            self.labels = anno['label'].tolist()
-        elif isinstance(anno, dict):
-            self.path = anno['img_name']
-            self.labels = anno['label']
+        self.path = anno['image_name']
+        self.labels = anno['anno']
         self.swap=swap
-    def __getlen__(self):
+    def __len__(self):
         return len(self.labels)
     def __getitem__(self, item):
         paths=os.path.join(self.root_path, self.path[item])

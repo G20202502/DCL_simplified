@@ -8,7 +8,7 @@ class DCL_Network(nn.Module):
         self.is_train = is_train
         self.num_class = 200
         
-        self.backbone = getattr(models, 'resnet50')
+        self.backbone = getattr(models, 'resnet50')()
         if args.resnet50_path != None:
             self.backbone.load_state_dict(torch.load(args.resnet50_path))
         self.backbone = nn.Sequential(*list(self.backbone.children())[:-2])

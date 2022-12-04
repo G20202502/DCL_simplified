@@ -36,7 +36,7 @@ def Init_dataset(args):
 
 
 def Init_model(args):
-
+    pass
 
 def Initialization():
     parser = argparse.ArgumentParser(description='DCL_arguments')
@@ -55,6 +55,7 @@ def Initialization():
     parser.add_argument('--eval_num_workers', default = 16)
     parser.add_argument('--crop_reso', default = 448)
     parser.add_argument('--swap_window', default = 7)
+    parser.add_argument('--resnet50_path', default = None)
 
     args = parser.parse_args()
 

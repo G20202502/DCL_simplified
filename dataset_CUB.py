@@ -23,9 +23,9 @@ class dataset(data.Dataset):
             self.path = anno['img_name']
             self.labels = anno['label']
         self.swap=swap
-    def _getlen_(self):
+    def __getlen__(self):
         return len(self.labels)
-    def _getitem_(self, item):
+    def __getitem__(self, item):
         paths=os.path.join(self.root_path, self.path[item])
         image=Image(open(paths))
         img_unswap = self.common_aug(image)
@@ -36,7 +36,7 @@ class dataset(data.Dataset):
         swap_label=label+self.Config.numcls
         img_unswap=ToTensor(img_unswap)
         if self.val:
-            return img_unswap, label
+            return img_unswap, label, swap_label, origin_loc
         if self.train:
             swap_image, swap_loc=self.swap(unswap_regions)
             swap_image=ToTensor(swap_image)
@@ -69,7 +69,14 @@ def collate_train(batch):
         loc.append(sample[5])
     return torch.stack(imgs, 0), cls_labels, adv_labels, loc
 def collate_val(batch):
-    imgs = [sample[0] for sample in batch]
-    cls_labels = [sample[1] for sample in batch]
-    return torch.stack(imgs,0), cls_labels
+    imgs = []
+    cls_labels = []
+    adv_labels = []
+    loc = []
+    for sample in batch:
+        imgs.append(sample[0])
+        cls_labels.append(sample[1])
+        adv_labels.append(sample[2])
+        loc.append(sample[3])
+    return torch.stack(imgs,0), cls_labels, adv_labels, loc
     

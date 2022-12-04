@@ -46,7 +46,6 @@ def Initialization():
     parser.add_argument('--epoch_num', default = 180)
     parser.add_argument('--train_batchsize', default = 16)
     parser.add_argument('--eval_batchsize', default = 16)
-    parser.add_argument('--save_epoch', default = 10)
     parser.add_argument('--eval_epoch', default = 10)
     parser.add_argument('--base_lr', default = 0.008)
     parser.add_argument('--decay_step', default = 60)
@@ -56,6 +55,8 @@ def Initialization():
     parser.add_argument('--crop_reso', default = 448)
     parser.add_argument('--swap_window', default = 7)
     parser.add_argument('--resnet50_path', default = None)
+    parser.add_argument('--auto_resume', dest='auto_resume',
+                        action='store_true')
 
     args = parser.parse_args()
 
@@ -65,4 +66,4 @@ def Initialization():
 
     model = Init_model(args)
 
-    return args
+    return args, train_dataset, eval_dataset, model

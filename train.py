@@ -25,6 +25,7 @@ def train(model,
     step=0
     train_batch_size = data_loader['train'].batch_size
     train_epoch_step = data_loader['train'].__len__()
+    checkpoint=checkpoint*train_epoch_step
     date_suffix = dt()
     con_loss_func = nn.L1Loss()
     cls_loss_func = nn.CrossEntropyLoss()
@@ -39,12 +40,20 @@ def train(model,
             total_loss=0
             step+=1
             model.train(True)
-            img, cls_lables, adv_lables, loc= data
+            
+            img, cls_lables, adv_lables, loc = data
+            
+            cls_lables = cls_lables.to('cuda').long()
+            adv_lables = adv_lables.to('cuda').long()
+            loc = loc.to('cuda')
+            
             optimizer.zero_grad()
             cls_out, adv_out, con_out=model(img)
+            
             cls_loss = cls_loss_func(cls_out, cls_lables)
             adv_loss = cls_loss_func(adv_out, adv_lables)
             con_loss = con_loss_func(con_out, loc)
+            
             total_loss = alpha * cls_loss + beta * adv_loss + gamma *con_loss
             total_loss.backward()
             torch.cuda.synchronize()
@@ -60,8 +69,10 @@ def train(model,
                 top1_acc, top2_acc, top3_acc  = eval(model, data_loader['val'], epoch)
                 save_path = os.path.join(save_dir, 'weights_%d_%d_%.4f_%.4f.pth'%(epoch, cnt, top1_acc, top3_acc))
                 torch.cuda.synchronize()
+                '''
                 torch.save(model.state_dict(), save_path)
                 print('saved model to %s' % (save_path), flush=True)
+                '''
                 torch.cuda.empty_cache()
         
         exp_lr_scheduler.step(epoch)

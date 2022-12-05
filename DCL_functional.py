@@ -28,7 +28,7 @@ def swap(regs, crop_size):
     for id, reg in enumerate(swap_regs):
         row_id = int(id / crop_size)
         col_id = int(id % crop_size)
-        swap_img.paste(reg, (col_id * crop_size, row_id * crop_size))
+        swap_img.paste(reg, (col_id * reg_w, row_id * reg_h))
 
     sigma = ( sigma - (crop_size*crop_size)//2 ) / (crop_size*crop_size)
     

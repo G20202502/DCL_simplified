@@ -16,13 +16,13 @@ def Init_transforms(args):
             DCL_transforms.Randomswap(args.swap_window)
         ]),
         'img_aug': transforms.Compose([
+            transforms.Resize(args.resz_reso),
             transforms.RandomRotation(degrees = 15),
-            transforms.RandomHorizontalFlip(),
-            transforms.Resize(args.crop_reso),
-            transforms.RandomCrop((args.crop_reso, args.crop_reso))
+            transforms.RandomCrop((args.crop_reso, args.crop_reso)),
+            transforms.RandomHorizontalFlip()
         ]),
         'totensor': transforms.Compose([
-            transforms.Resize(args.crop_reso, args.crop_reso),
+            transforms.Resize((args.crop_reso, args.crop_reso)),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
@@ -50,8 +50,8 @@ def Init_dataset(args):
 
     path=os.path.join(args.data_dir,'data')
 
-    tran_set = dataset(path, train_anno, swap=dataset_transforms["swap"], common_aug=dataset_transforms["img_aug"], train=True)
-    val_set = dataset(path, val_anno, swap=None, common_aug=None, val=True)
+    tran_set = dataset(path, train_anno, totensor=dataset_transforms["totensor"],swap=dataset_transforms["swap"], common_aug=dataset_transforms["img_aug"], train=True)
+    val_set = dataset(path, val_anno, totensor=dataset_transforms["totensor"],swap=None, common_aug=None, val=True)
     return tran_set, val_set
     
 
@@ -68,8 +68,8 @@ def Initialization():
     parser.add_argument('--epoch_num', default = 180)
     parser.add_argument('--train_batchsize', default = 16)
     parser.add_argument('--eval_batchsize', default = 16)
-    parser.add_argument('--eval_epoch', default = 10)
-    parser.add_argument('--base_lr', default = 0.008)
+    parser.add_argument('--eval_epoch', default = 5)
+    parser.add_argument('--base_lr', default = 0.0008)
     parser.add_argument('--decay_step', default = 60)
     parser.add_argument('--cls_lr_ratio', default = 10.0)
     parser.add_argument('--train_num_workers', default = 8)
@@ -79,7 +79,7 @@ def Initialization():
     parser.add_argument('--resnet50_path', default = None)
     parser.add_argument('--auto_resume', dest='auto_resume',
                         action='store_true')
-
+    parser.add_argument('--resz_reso',default=512)
     args = parser.parse_args()
 
     args.save_dir = os.path.normpath(args.save_dir)

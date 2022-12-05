@@ -1,4 +1,4 @@
-import DCL_transforms as F
+import DCL_functional as F
 
 class Randomswap(object):
     def __init__(self, size):
